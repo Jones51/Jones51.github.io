@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <title>Babylon.js sample code</title>
+
+    <!-- Babylon.js -->
+    <script src="https://code.jquery.com/pep/0.4.2/pep.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+    <script src="https://preview.babylonjs.com/ammo.js"></script>
+    <script src="https://preview.babylonjs.com/cannon.js"></script>
+    <script src="https://preview.babylonjs.com/Oimo.js"></script>
+    <script src="https://preview.babylonjs.com/libktx.js"></script>
+    <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+    <script src="https://preview.babylonjs.com/babylon.js"></script>
+    <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+    <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+    <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+    <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+    <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+    <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+    <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+
+    <style>
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+
+        var engine = null;
+        var scene = null;
+        var createDefaultEngine = function () { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }); };
+
+        var createScene = function () {
+
+            // Create the scene space
+            var scene = new BABYLON.Scene(engine);
+
+            var camera1 = new BABYLON.ArcRotateCamera("camera1", Math.PI / 2, Math.PI / 4, 10, new BABYLON.Vector3(0, -5, 0), scene);
+            scene.activeCamera = camera1;
+            scene.activeCamera.attachControl(canvas, true);
+            camera1.lowerRadiusLimit = 2;
+            camera1.upperRadiusLimit = 10;
+            camera1.wheelDeltaPercentage = 0.01;
+
+            // Add lights to the scene
+            var light1 = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 0), scene);
+
+            // Ground
+            const terrainMaterial = new BABYLON.StandardMaterial("terrainMaterial");
+            terrainMaterial.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/environments/valleygrass.png");
+            var ground = BABYLON.Mesh.CreateGroundFromHeightMap("ground", "textures/heightmap2.png", 100, 100, 150, 0, 10, scene, false);
+            ground.material = terrainMaterial;
+
+
+            // Colision and player area 
+            const wall = BABYLON.MeshBuilder.CreateTorus("torus", {thickness: 0.25, diameter: 40});
+            wall.position.y = 0;
+            wall.checkCollisions = true;
+            wall.isPickable = false;
+
+            // Skybox
+            var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:100.0}, scene);
+            var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
+            skyboxMaterial.backFaceCulling = false;
+            skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("textures/skybox4", scene);
+            skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+            skyboxMaterial.disableLighting = true;
+            skybox.material = skyboxMaterial;
+
+            // 7 elementos no cenário
+            BABYLON.SceneLoader.ImportMesh(
+                null,
+                "https://models.babylonjs.com/Marble/marble/",
+                "marble.gltf",
+                scene,
+                function (newMeshes) {          
+                    let elemento01 = newMeshes[0];
+                    elemento01.position.x = 21;
+                    elemento01.position.y = 1.3;
+            });
+
+            BABYLON.SceneLoader.ImportMesh(
+                null,
+                "https://models.babylonjs.com/vintageDeskFan/",
+                "vintageFan_animated.gltf",
+                scene,
+                function (newMeshes) {          
+                    let elemento02 = newMeshes[0];
+                    elemento02.scaling = new BABYLON.Vector3(0.02, 0.02, 0.02);
+                    elemento02.position.z = 24;
+                    elemento02.position.y = 1.3;       
+            });
+
+            BABYLON.SceneLoader.ImportMesh("", "https://models.babylonjs.com/", "seagulf.glb", scene, function (newMeshes) {          
+                let elemento03 = newMeshes[0];
+                elemento03.scaling = new BABYLON.Vector3(0.001, 0.001, 0.001);
+                elemento03.position.z = -20;
+                elemento03.position.y = 0.6; 
+                elemento03.position.x = 0;
+                
+            });
+
+            BABYLON.SceneLoader.ImportMesh(
+                "",
+                "https://models.babylonjs.com/Georgia-Tech-Dragon/",
+                "dragon.babylon",
+                scene,
+                function (newMeshes) {    
+                    let elemento04 = newMeshes[0];      
+                    elemento04.scaling = new BABYLON.Vector3(4,4, 4);
+                    elemento04.position.z = 0;
+                    elemento04.position.y = 0.4; 
+                    elemento04.position.x = -25;
+            });
+
+            BABYLON.SceneLoader.ImportMesh(
+                "",
+                "https://models.babylonjs.com/Georgia-Tech-Dragon/",
+                "dragon.glb",
+                scene,
+                function (newMeshes) {          
+                    let elemento05 = newMeshes[0];      
+                    elemento05.scaling = new BABYLON.Vector3(4,4, 4);
+                    elemento05.position.z = 2;
+                    elemento05.position.y = 0.4; 
+                    elemento05.position.x = -25;;
+            });
+
+            BABYLON.SceneLoader.ImportMesh(
+                "",
+                "https://models.babylonjs.com/",
+                "ExplodingBarrel.glb",
+                scene,
+                function (newMeshes) {          
+                    let barril = newMeshes[0];
+                    barril.scaling = new BABYLON.Vector3(0.02, 0.02, 0.02);
+                    barril.position.z = -10;
+                    barril.position.y = 0; 
+                    barril.position.x = 0;
+
+                
+            });
+
+            BABYLON.SceneLoader.ImportMesh("", "https://models.babylonjs.com/", "ufo.glb", scene, function (newMeshes) {          
+                let elemento07 = newMeshes[0];
+                elemento07.scaling = new BABYLON.Vector3(2, 2, 2);
+                elemento07.position.z = 10;
+                elemento07.position.y = 4; 
+                elemento07.position.x = 0;
+            });
+
+            // Meshes de coletar
+            var esfera = BABYLON.MeshBuilder.CreateSphere("sphere", { size: 0.1 }, scene);
+            esfera.position.x = 0;
+            esfera.position.z = 2;
+            esfera.position.y = 1.2;
+            esfera.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
+            esfera.checkCollisions = true;
+
+            var esfera02 = esfera.clone("esfera02");
+            esfera02.position.z = 3;
+            esfera02.scaling = new BABYLON.Vector3(0.6, 0.6, 0.6);
+
+            var esfera03 = esfera.clone("esfera03");
+            esfera03.position.z = 4;
+            esfera03.scaling = new BABYLON.Vector3(0.7, 0.7, 0.7);
+
+            var esfera04 = esfera.clone("esfera04");
+            esfera04.position.z = 5;
+            esfera04.scaling = new BABYLON.Vector3(0.8, 0.8, 0.8);
+
+            var esfera05 = esfera.clone("esfera05");
+            esfera05.position.z = 6;
+            esfera05.scaling = new BABYLON.Vector3(0.9, 0.9, 0.9);
+
+            var esfera06 = esfera.clone("esfera06");
+            esfera06.position.z = 7;
+            esfera06.scaling = new BABYLON.Vector3(1.0, 1.0, 1.0);
+
+            var esfera07 = esfera.clone("esfera07");
+            esfera07.position.z = 9;
+            esfera07.scaling = new BABYLON.Vector3(1.1, 1.1, 1.1);
+
+            var esfera08 = esfera.clone("esfera08");
+            esfera08.position.z = 11;
+            esfera08.scaling = new BABYLON.Vector3(1.2, 1.2, 1.2);
+
+            var esfera09 = esfera.clone("esfera09");
+            esfera09.position.z = 13;
+            esfera09.scaling = new BABYLON.Vector3(1.3, 1.3, 1.3);
+
+            var esfera10 = esfera.clone("esfera10");
+            esfera10.position.z = 15;
+            esfera10.scaling = new BABYLON.Vector3(1.4, 1.4, 1.4);
+
+          
+
+
+
+            // GUI
+            var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+            var instructions = new BABYLON.GUI.TextBlock();
+            instructions.text = "Move w/ WASD keys, B for Samba, look with the mouse";
+            instructions.color = "white";
+            instructions.fontSize = 16;
+            instructions.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT
+            instructions.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM
+            advancedTexture.addControl(instructions);
+
+            // Keyboard events
+            var inputMap = {};
+            scene.actionManager = new BABYLON.ActionManager(scene);
+            scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger, function (evt) {
+                inputMap[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+            }));
+            scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger, function (evt) {
+                inputMap[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+            }));
+
+
+            // Load hero character
+            BABYLON.SceneLoader.ImportMesh("", "https://assets.babylonjs.com/meshes/", "HVGirl.glb", scene, function (newMeshes, particleSystems, skeletons, animationGroups) {
+                var hero = newMeshes[0];
+
+                //Scale the model down        
+                hero.scaling.scaleInPlace(0.1);
+
+                //Lock camera on the character 
+                camera1.target = hero;
+
+                //Hero character variables 
+                var heroSpeed = 0.03;
+                var heroSpeedBackwards = 0.01;
+                var heroRotationSpeed = 0.1;
+
+                var animating = true;
+
+                const walkAnim = scene.getAnimationGroupByName("Walking");
+                const walkBackAnim = scene.getAnimationGroupByName("WalkingBack");
+                const idleAnim = scene.getAnimationGroupByName("Idle");
+                const sambaAnim = scene.getAnimationGroupByName("Samba");
+
+                
+
+                //Rendering loop (executed for everyframe)
+                scene.onBeforeRenderObservable.add(() => {
+                    var keydown = false;
+                    //Manage the movements of the character (e.g. position, direction)
+                    if (inputMap["w"]) {
+                        hero.moveWithCollisions(hero.forward.scaleInPlace(heroSpeed));
+                        keydown = true;
+                    }
+                    if (inputMap["s"]) {
+                        hero.moveWithCollisions(hero.forward.scaleInPlace(-heroSpeedBackwards));
+                        keydown = true;
+                    }
+                    if (inputMap["a"]) {
+                        hero.rotate(BABYLON.Vector3.Up(), -heroRotationSpeed);
+                        keydown = true;
+                    }
+                    if (inputMap["d"]) {
+                        hero.rotate(BABYLON.Vector3.Up(), heroRotationSpeed);
+                        keydown = true;
+                    }
+                    if (inputMap["b"]) {
+                        keydown = true;
+                    }
+
+                    //Manage animations to be played  
+                    if (keydown) {
+                        if (!animating) {
+                            animating = true;
+                            if (inputMap["s"]) {
+                                //Walk backwards
+                                walkBackAnim.start(true, 1.0, walkBackAnim.from, walkBackAnim.to, false);
+                            }
+                            else if
+                                (inputMap["b"]) {
+                                //Samba!
+                                sambaAnim.start(true, 1.0, sambaAnim.from, sambaAnim.to, false);
+                            }
+                            else {
+                                //Walk
+                                walkAnim.start(true, 1.0, walkAnim.from, walkAnim.to, false);
+                            }
+                        }
+                    }
+                    else {
+
+                        if (animating) {
+                            //Default animation is idle when no key is down     
+                            idleAnim.start(true, 1.0, idleAnim.from, idleAnim.to, false);
+
+                            //Stop all animations besides Idle Anim when no key is down
+                            sambaAnim.stop();
+                            walkAnim.stop();
+                            walkBackAnim.stop();
+
+                            //Ensure animation are played only once per rendering loop
+                            animating = false;
+                        }
+                    }
+                });
+            });
+
+         
+                            
+            return scene;
+            }
+
+
+        function animationPiano(box){
+            const frameRate = 10;
+
+            const xSlide = new BABYLON.Animation("xSlide", "position.z", frameRate, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+
+            const keyFrames = []; 
+
+            keyFrames.push({
+                frame: 0,
+                value: 0
+            });
+
+            keyFrames.push({
+                frame: frameRate,
+                value: -2
+            });
+
+            keyFrames.push({
+                frame: 2 * frameRate,
+                value: 2
+            });
+
+            xSlide.setKeys(keyFrames);
+
+            box.animations.push(xSlide);
+
+            const myAnim = scene.beginAnimation(box, 0, 2 * frameRate, true);
+
+            setTimeout(() => {myAnim.stop()}, 200);
+        }
+
+        function animationPiano2(box){
+            const frameRate = 10;
+
+            const xSlide = new BABYLON.Animation("xSlide", "position.z", frameRate, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+
+            const keyFrames = []; 
+
+            keyFrames.push({
+                frame: 0,
+                value: 0
+            });
+
+            keyFrames.push({
+                frame: frameRate,
+                value: -4
+            });
+
+            keyFrames.push({
+                frame: 4 * frameRate,
+                value: 4
+            });
+
+            xSlide.setKeys(keyFrames);
+
+            box.animations.push(xSlide);
+
+            const myAnim = scene.beginAnimation(box, 0, 2 * frameRate, true);
+
+            setTimeout(() => {myAnim.stop()}, 200);
+        }
+
+        function displayOneMesh(mostrar, listaMeshes){
+            for (var j = 0; j< 8; j ++){
+                listaMeshes[j].setEnabled(false);
+            }
+            mostrar.setEnabled(true);
+        }
+
+        function centro(posicao, quantidade, niveis, troca){
+            var newMesh = new BABYLON.Mesh(scene);
+
+            var redMaterial = new BABYLON.StandardMaterial("RedMaterial", scene);
+            redMaterial.diffuseTexture = new BABYLON.Texture("https://upload.wikimedia.org/wikipedia/commons/7/74/RedDwarfNASA.jpg", scene);
+            redMaterial.diffuseTexture.hasAlpha = true;
+            redMaterial.backFaceCulling = false;
+
+            var yellowMaterial = new BABYLON.StandardMaterial("yellowMaterial", scene);
+            yellowMaterial.diffuseTexture = new BABYLON.Texture("https://upload.wikimedia.org/wikipedia/commons/a/a6/Lapis_lazuli_block.jpg", scene);
+            yellowMaterial.diffuseTexture.hasAlpha = true;
+            yellowMaterial.backFaceCulling = false;
+
+
+            var auxiliar = 0;
+
+            for (var j = 0; j< quantidade; j ++){
+                var esfera = BABYLON.MeshBuilder.CreateSphere("sphere", { size: 0.75 }, scene);
+                esfera.material = redMaterial;
+                esfera.position.x = posicao;
+                esfera.position.z = auxiliar;
+                esfera.position.y = niveis;
+                newMesh.addChild(esfera);
+                
+                if (j % 2 == 0){
+                    esfera.material = redMaterial;
+                }
+                else{
+                    esfera.material = yellowMaterial;
+                }
+                auxiliar+=1;
+            }
+        
+
+            return newMesh;
+        }
+
+        function circle(posicao, rotacao, raio){
+            var newMesh = new BABYLON.Mesh(scene);
+            var altRadios = 2;
+            var radius = raio;
+            for (var j = 0; j<1; j ++){
+                //Array of points to construct a spiral with lines
+                var myPoints = [];
+
+                var deltaTheta = 0.1;
+
+                var theta = 0;
+                var Y = 0;
+                for (var i = 0; i<100; i++) {
+                    myPoints.push(new BABYLON.Vector3(radius * Math.cos(theta), Y, radius * Math.sin(theta)));
+                    theta += deltaTheta;
+                    //Y += deltaY
+                }
+
+                //Create lines 
+                var lines = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints}, scene);
+
+                var radius = radius - altRadios;
+
+                newMesh.addChild(lines);
+
+                newMesh.position.x = posicao;
+                newMesh.rotation.x = rotacao;
+            }
+            //newMesh.material = redMaterial;
+            return newMesh;
+        }
+
+        function circle2(){
+            var newMesh = new BABYLON.Mesh(scene);
+            var altRadios = 2;
+            var radius = 10;
+            for (var j = 0; j<1; j ++){
+                //Array of points to construct a spiral with lines
+                var myPoints = [];
+
+                var deltaTheta = 0.1;
+
+                var theta = 0;
+                var Y = 0;
+                for (var i = 0; i<100; i++) {
+                    myPoints.push(new BABYLON.Vector3(radius * Math.cos(theta), Y, radius * Math.sin(theta)));
+                    theta += deltaTheta;
+                    //Y += deltaY
+                }
+
+                //Create lines 
+                var lines = BABYLON.MeshBuilder.CreateLines("lines", {points: myPoints}, scene);
+                
+                var radius = radius - altRadios;
+
+                newMesh.addChild(lines);
+            }
+            //newMesh.material = redMaterial;
+            return newMesh;
+        }
+
+        function spheres(posicao, rotacao, raio, quantidade, distancia){
+            // Materials
+            var blueMaterial = new BABYLON.StandardMaterial("blueMaterial", scene);
+            blueMaterial.diffuseTexture = new BABYLON.Texture("https://upload.wikimedia.org/wikipedia/commons/4/49/Plagiomnium_affine_laminazellen.jpeg", scene);
+            blueMaterial.diffuseTexture.hasAlpha = true;
+            blueMaterial.backFaceCulling = false;
+            
+
+            var newMesh = new BABYLON.Mesh("star", scene);
+
+            var circle_01 = circle();
+            newMesh.addChild(circle_01);
+            
+            radius = raio;
+            theta = 0;
+            for (i =0 ; i< quantidade; i ++){
+                var box = BABYLON.MeshBuilder.CreateSphere("sphere", { size: 0.75 }, scene);
+                box.id = "box";
+                box.position.x = radius * Math.cos(theta);
+                box.position.z = radius * Math.sin(theta);
+                newMesh.addChild(box);
+                theta += distancia;
+
+                box.material = blueMaterial;
+            }
+
+            newMesh.position.x = posicao;
+            
+            if(rotacao == Math.PI/2){
+                newMesh.rotation.z = rotacao;
+            }
+            else{
+                newMesh.rotation.x = rotacao;
+                newMesh.id = "star2";
+            }
+            
+
+            return newMesh;
+        }
+
+        function boxes(){
+            // Materials
+            var redMaterial = new BABYLON.StandardMaterial("RedMaterial", scene);
+            var blueMaterial = new BABYLON.StandardMaterial("RedMaterial", scene);
+            var purpleMaterial = new BABYLON.StandardMaterial("RedMaterial", scene);
+            var oneMaterial = new BABYLON.StandardMaterial("oneMaterial", scene);
+            var twoMaterial = new BABYLON.StandardMaterial("twoMaterial", scene);
+            var threeMaterial = new BABYLON.StandardMaterial("threeMaterial", scene);
+            redMaterial.diffuseColor = new BABYLON.Color3(1,0,0);
+            blueMaterial.diffuseColor = new BABYLON.Color3(0,1,1);
+            purpleMaterial.diffuseColor = new BABYLON.Color3(1,0,1);
+            oneMaterial.specularColor = new BABYLON.Color3(1, 1, 0);
+            twoMaterial.emissiveColor = new BABYLON.Color3(0, 0, 1);
+            threeMaterial.ambientColor = new BABYLON.Color3(0.23, 0.98, 0.53);
+
+
+            var newMesh = new BABYLON.Mesh("star", scene);
+
+            var circle_01 = circle();
+            newMesh.addChild(circle_01);
+            
+            radius = 10;
+            theta = 0;
+            for (i =0 ; i< 1; i ++){
+                var box = BABYLON.MeshBuilder.CreateSphere("sphere", { size: 0.75 }, scene);
+                box.id = "box";
+                box.position.x = radius * Math.cos(theta);
+                box.position.z = radius * Math.sin(theta);
+                newMesh.addChild(box);
+                theta += 0.1;
+
+                box.material = blueMaterial;
+            }
+
+            radius = 8;
+            theta = 0;
+            for (i =0 ; i< 0; i ++){
+                var box = BABYLON.MeshBuilder.CreateBox("box2", { size: 0.75 }, scene);
+                box.id = "box2";
+                box.scaling = new BABYLON.Vector3(2, 2, 2);
+                box.position.x = radius * Math.cos(theta);
+                box.position.z = radius * Math.sin(theta);
+                newMesh.addChild(box);
+                theta += 0.3;
+
+                if (i % 2 == 0){
+                    box.material = oneMaterial;
+                }
+                else{
+                    box.material = purpleMaterial;
+                }
+            }
+
+            radius = 6;
+            theta = 0;
+            for (i =0 ; i< 0; i ++){
+                var box = BABYLON.MeshBuilder.CreateBox("box2", { size: 0.75 }, scene);
+                box.material = twoMaterial;
+                box.id = "box3";
+                box.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
+                box.position.x = radius * Math.cos(theta);
+                box.position.z = radius * Math.sin(theta);
+                newMesh.addChild(box);
+                theta += 0.3;
+            }
+
+
+            return newMesh;
+        }
+
+        function createTree() {
+
+            var incY = -4;
+            var scale = 1;
+            const LEN = 10;
+
+            var newMesh = new BABYLON.Mesh("tree", scene);
+
+            var myPoints = [
+                new BABYLON.Vector3(0, incY, 0),
+                new BABYLON.Vector3(0, incY + LEN, 0)
+
+            ];
+
+            var line = BABYLON.MeshBuilder.CreateLines("lines", { points: myPoints }, scene);
+            newMesh.addChild(line);
+
+            for (var i = 0; i < LEN; i++) {
+                var star = createStar();
+                star.position.y = incY;
+                star.scaling = new BABYLON.Vector3(scale, scale, scale);
+                scale -= 0.1;
+                incY += 1;
+                newMesh.addChild(star);
+            }
+
+            return newMesh;
+        }
+
+        function createStar() {
+
+            var angle = 0;
+            var incAngle = Math.PI / 4;
+            var radius = 3;
+            var newMesh = new BABYLON.Mesh("star", scene);
+
+            for (var i = 0; i < 12; i++) {
+
+                var x = Math.cos(angle) * radius;
+                var z = Math.sin(angle) * radius;
+                angle = angle + incAngle;
+
+                var box = BABYLON.MeshBuilder.CreateBox("box", { size: 0.75 }, scene);
+                box.id = "box";
+                var myPoints = [
+                    new BABYLON.Vector3(0, 0, 0),
+                    new BABYLON.Vector3(x, 0, z),
+
+                ];
+                var line = BABYLON.MeshBuilder.CreateLines("lines", { points: myPoints }, scene);
+
+                box.position.x = x;
+                box.position.z = z;
+                box.rotation.y = angle;
+
+                newMesh.addChild(box);
+                newMesh.addChild(line);
+            }
+
+            return newMesh;
+
+        }
+
+        function loop() {
+
+            var meshes = scene.getMeshesByID("star");
+
+            var inc = 1;
+            meshes.forEach(function (mesh) {
+                mesh.rotation.z -= (0.01 * inc);
+                inc = inc * -1;
+            });
+
+            var meshes = scene.getMeshesByID("star2");
+
+            var inc = 1;
+            meshes.forEach(function (mesh) {
+                mesh.rotation.y += (0.01 * inc);
+                inc = inc * -1;
+            });
+        };
+
+
+
+        engine = createDefaultEngine();
+        if (!engine) throw 'engine should not be null.';
+        scene = createScene();
+
+        engine.runRenderLoop(function () {
+            if (scene) {
+                loop();
+                scene.render();
+
+            }
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+
+</html>
