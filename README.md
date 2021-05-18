@@ -1,2 +1,2 @@
 # Jones51.github.io
-aaaaaa
+Continuação do repositório https://github.com/Jones51/CompGrafica02
