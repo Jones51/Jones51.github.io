@@ -72,11 +72,16 @@
             ground.material = terrainMaterial;
 
 
+            // Text
+            
+
+
             // Colision and player area 
             const wall = BABYLON.MeshBuilder.CreateTorus("torus", {thickness: 0.25, diameter: 40});
             wall.position.y = 0;
             wall.checkCollisions = true;
             wall.isPickable = false;
+            wall.isVisible = false;
 
             // Skybox
             var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:100.0}, scene);
@@ -175,7 +180,6 @@
             esfera.position.z = 2;
             esfera.position.y = 1.2;
             esfera.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
-            esfera.checkCollisions = true;
 
             var esfera02 = esfera.clone("esfera02");
             esfera02.position.z = 3;
